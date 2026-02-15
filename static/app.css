@@ -293,6 +293,7 @@ button#new-game:active {
   border-color: var(--panel-lo) var(--panel-hi) var(--panel-hi) var(--panel-lo);
   transition: background 0.3s;
   max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .board {
@@ -301,6 +302,9 @@ button#new-game:active {
   width: max-content;
   background: var(--cell-revealed-border);
   padding: 0;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .cell {
@@ -451,6 +455,26 @@ button#new-game:active {
   opacity: 0.3;
 }
 
+/* ── Mobile / Touch ── */
+@supports (padding: max(0px)) {
+  .layout {
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+    padding-right: max(0.5rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+.theme-toggle,
+button#new-game {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.cell {
+  min-height: max(var(--cell-size), 32px);
+  min-width: max(var(--cell-size), 32px);
+}
+
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .layout {
@@ -473,11 +497,14 @@ button#new-game:active {
   select,
   input[type="number"] {
     width: 100%;
+    min-height: 44px;
+    font-size: 16px;
   }
 
   button#new-game {
     width: 100%;
     justify-content: center;
+    min-height: 48px;
   }
 
   .custom-settings {
@@ -495,6 +522,10 @@ button#new-game:active {
   .footer {
     display: none;
   }
+
+  .stat-card {
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 380px) {
@@ -504,6 +535,8 @@ button#new-game:active {
 
   .cell {
     font-size: 0.75rem;
+    min-height: max(1.5rem, 36px);
+    min-width: max(1.5rem, 36px);
   }
 
   .board {

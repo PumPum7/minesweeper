@@ -1,7 +1,11 @@
 use std::cell::RefCell;
 
+use js_sys::Function;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
-use web_sys::{Document, Element, Event, HtmlElement, HtmlInputElement, HtmlSelectElement, KeyboardEvent};
+use web_sys::{
+    Document, Element, Event, HtmlElement, HtmlInputElement, HtmlSelectElement, KeyboardEvent,
+    PointerEvent,
+};
 
 use crate::core::{Game, GameStatus};
 use crate::difficulty::{validate_custom, DifficultyPreset, DifficultySettings};
@@ -73,6 +77,11 @@ struct App {
     timer_id: Option<i32>,
     cursor_x: usize,
     cursor_y: usize,
+    touch_pending: Option<(usize, usize)>,
+    touch_timer_id: Option<i32>,
+    touch_timer_callback: Option<Closure<dyn FnMut()>>,
+    touch_long_press_fired: bool,
+    touch_handled: bool,
 }
 
 impl App {
@@ -144,20 +153,62 @@ impl App {
             timer_id: None,
             cursor_x: 0,
             cursor_y: 0,
+            touch_pending: None,
+            touch_timer_id: None,
+            touch_timer_callback: None,
+            touch_long_press_fired: false,
+            touch_handled: false,
         })
     }
 
     fn attach_event_listeners(&mut self) -> Result<(), JsValue> {
         let board_click = Closure::wrap(Box::new(move |event: Event| {
             if let Some((x, y)) = event_coords(&event) {
-                let _ = with_app_mut(|app| {
-                    app.handle_primary_click(x, y);
-                });
+                let skip = with_app_mut(|app| {
+                    if app.touch_handled {
+                        app.touch_handled = false;
+                        true
+                    } else {
+                        false
+                    }
+                })
+                .unwrap_or(false);
+                if !skip {
+                    let _ = with_app_mut(|app| {
+                        app.handle_primary_click(x, y);
+                    });
+                }
             }
         }) as Box<dyn FnMut(Event)>);
         self.board
             .add_event_listener_with_callback("click", board_click.as_ref().unchecked_ref())?;
         self.event_handlers.push(board_click);
+
+        let board_pointerdown = Closure::wrap(Box::new(move |event: Event| {
+            let coords = event_coords(&event);
+            let pe = event.dyn_into::<PointerEvent>().ok();
+            if let (Some((x, y)), Some(pe)) = (coords, pe) {
+                let _ = with_app_mut(|app| {
+                    app.handle_pointerdown(x, y, pe.pointer_type().as_str(), pe.button());
+                });
+            }
+        }) as Box<dyn FnMut(Event)>);
+        self.board
+            .add_event_listener_with_callback("pointerdown", board_pointerdown.as_ref().unchecked_ref())?;
+        self.event_handlers.push(board_pointerdown);
+
+        let board_pointerup = Closure::wrap(Box::new(move |_event: Event| {
+            let _ = with_app_mut(|app| {
+                app.handle_pointerup();
+            });
+        }) as Box<dyn FnMut(Event)>);
+        self.board
+            .add_event_listener_with_callback("pointerup", board_pointerup.as_ref().unchecked_ref())?;
+        self.board
+            .add_event_listener_with_callback("pointercancel", board_pointerup.as_ref().unchecked_ref())?;
+        self.board
+            .add_event_listener_with_callback("pointerleave", board_pointerup.as_ref().unchecked_ref())?;
+        self.event_handlers.push(board_pointerup);
 
         let board_context = Closure::wrap(Box::new(move |event: Event| {
             event.prevent_default();
@@ -389,6 +440,76 @@ impl App {
             self.cursor_x = x;
             self.cursor_y = y;
         }
+    }
+
+    fn handle_pointerdown(&mut self, x: usize, y: usize, pointer_type: &str, button: i16) {
+        self.clear_touch_timer();
+        self.touch_pending = None;
+        self.touch_long_press_fired = false;
+
+        if button == 2 {
+            self.set_cursor(x, y);
+            self.handle_toggle_flag(x, y);
+            let _ = self.render_all();
+            return;
+        }
+
+        if button != 0 && pointer_type != "touch" {
+            return;
+        }
+
+        self.touch_pending = Some((x, y));
+
+        let window = match self.document.default_view() {
+            Some(w) => w,
+            None => return,
+        };
+
+        let callback = Closure::wrap(Box::new(move || {
+            let _ = with_app_mut(|app| {
+                app.clear_touch_timer();
+                if let Some((px, py)) = app.touch_pending.take() {
+                    app.touch_long_press_fired = true;
+                    app.touch_handled = true;
+                    app.set_cursor(px, py);
+                    app.handle_toggle_flag(px, py);
+                    let _ = app.render_all();
+                }
+            });
+        }) as Box<dyn FnMut()>);
+
+        match window.set_timeout_with_callback_and_timeout_and_arguments_0(
+            callback.as_ref().unchecked_ref::<Function>(),
+            500,
+        ) {
+            Ok(id) => {
+                self.touch_timer_id = Some(id);
+                self.touch_timer_callback = Some(callback);
+            }
+            Err(_) => {
+                self.touch_pending = None;
+            }
+        }
+    }
+
+    fn handle_pointerup(&mut self) {
+        if let Some((x, y)) = self.touch_pending.take() {
+            self.clear_touch_timer();
+            if !self.touch_long_press_fired {
+                self.touch_handled = true;
+                self.handle_primary_click(x, y);
+            }
+            self.touch_long_press_fired = false;
+        }
+    }
+
+    fn clear_touch_timer(&mut self) {
+        if let Some(id) = self.touch_timer_id.take() {
+            if let Some(window) = self.document.default_view() {
+                window.clear_timeout_with_handle(id);
+            }
+        }
+        self.touch_timer_callback = None;
     }
 
     fn record_best_time(&mut self) {

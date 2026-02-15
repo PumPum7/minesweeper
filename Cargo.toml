@@ -24,6 +24,7 @@ features = [
   "Event",
   "KeyboardEvent",
   "MouseEvent",
+  "PointerEvent",
   "Storage",
   "console",
 ]

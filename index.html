@@ -2,11 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+    <meta name="theme-color" content="#3a3a3a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Minesweeper" />
     <title>Minesweeper</title>
 
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icon-192.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.svg" />
     <link data-trunk rel="rust" />
     <link data-trunk rel="css" href="static/app.css" />
+    <link data-trunk rel="copy" href="static/manifest.json" />
+    <link data-trunk rel="copy" href="static/icon-192.svg" />
+    <link data-trunk rel="copy" href="static/icon-512.svg" />
+    <link data-trunk rel="copy" href="static/sw.js" />
   </head>
   <body>
 
@@ -94,7 +105,7 @@
       <footer class="footer">
         <span>Left click: reveal</span>
         <span class="sep">·</span>
-        <span>Right click: flag</span>
+        <span>Right click / long-press: flag</span>
         <span class="sep">·</span>
         <span>Arrow keys / WASD: move</span>
         <span class="sep">·</span>
@@ -103,5 +114,12 @@
         <span>T: toggle theme</span>
       </footer>
     </main>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () =>
+          navigator.serviceWorker.register("/sw.js").catch(() => {})
+        );
+      }
+    </script>
   </body>
 </html>
