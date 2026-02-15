@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Minesweeper</title>
+
+    <link data-trunk rel="rust" />
+    <link data-trunk rel="css" href="static/app.css" />
+  </head>
+  <body>
+
+    <main class="layout">
+      <header class="topbar">
+        <div class="logo">
+          <span class="logo-icon">💣</span>
+          <div>
+            <h1>Minesweeper</h1>
+            <p class="subtitle">Rust + WebAssembly</p>
+          </div>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme">
+          <span class="theme-toggle-icon" id="theme-toggle-icon">☀️</span>
+        </button>
+      </header>
+
+      <section class="dashboard">
+        <div class="stat-card mines-card">
+          <span class="stat-icon">🚩</span>
+          <div class="stat-info">
+            <span class="stat-label">Mines Left</span>
+            <span class="stat-value" id="mine-counter">0</span>
+          </div>
+        </div>
+
+        <div class="stat-card status-card">
+          <span class="stat-icon" id="status-emoji">😊</span>
+          <div class="stat-info">
+            <span class="stat-label">Status</span>
+            <span class="stat-value" id="status">Ready</span>
+          </div>
+        </div>
+
+        <div class="stat-card timer-card">
+          <span class="stat-icon">⏱️</span>
+          <div class="stat-info">
+            <span class="stat-label">Time</span>
+            <span class="stat-value" id="time-counter">0s</span>
+          </div>
+        </div>
+
+        <div class="stat-card best-card">
+          <span class="stat-icon">🏆</span>
+          <div class="stat-info">
+            <span class="stat-label">Record</span>
+            <span class="stat-value" id="best-counter">--</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls-bar">
+        <div class="control-group">
+          <label for="difficulty">Difficulty</label>
+          <select id="difficulty">
+            <option value="beginner">Beginner (9×9, 10 mines)</option>
+            <option value="intermediate">Intermediate (16×16, 40 mines)</option>
+            <option value="expert">Expert (30×16, 99 mines)</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <div id="custom-settings" class="custom-settings custom-settings-hidden">
+          <div class="control-group">
+            <label for="custom-width">Width</label>
+            <input id="custom-width" type="number" min="5" max="50" value="12" />
+          </div>
+          <div class="control-group">
+            <label for="custom-height">Height</label>
+            <input id="custom-height" type="number" min="5" max="50" value="12" />
+          </div>
+          <div class="control-group">
+            <label for="custom-mines">Mines</label>
+            <input id="custom-mines" type="number" min="1" value="20" />
+          </div>
+        </div>
+
+        <button id="new-game" type="button">New Game</button>
+      </section>
+
+      <section class="board-panel">
+        <div id="board" class="board" aria-label="Minesweeper board"></div>
+      </section>
+
+      <footer class="footer">
+        <span>Left click: reveal</span>
+        <span class="sep">·</span>
+        <span>Right click: flag</span>
+        <span class="sep">·</span>
+        <span>Arrow keys / WASD: move</span>
+        <span class="sep">·</span>
+        <span>N: new game</span>
+        <span class="sep">·</span>
+        <span>T: toggle theme</span>
+      </footer>
+    </main>
+  </body>
+</html>
