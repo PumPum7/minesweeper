@@ -611,6 +611,14 @@ impl App {
                 } else if cell.flagged {
                     classes.push("flagged");
                     label.push_str("\u{1F6A9}");
+                    if game_status == GameStatus::Lost && !cell.mine {
+                        classes.push("wrong-flag");
+                        let delay_ms = (x + y) * 30;
+                        button.set_attribute(
+                            "style",
+                            &format!("animation-delay:{}ms", delay_ms),
+                        )?;
+                    }
                     if game_status == GameStatus::Won && cell.mine {
                         classes.push("flag-sweep");
                         let delay_ms = (x + y) * 40;

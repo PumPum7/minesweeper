@@ -360,6 +360,12 @@ button#new-game:active {
   font-size: 1rem;
 }
 
+.cell.wrong-flag {
+  color: var(--danger);
+  background: var(--cell-mine-bg);
+  animation: wrong-flag-anim 0.4s ease-out backwards;
+}
+
 .cell.mine {
   color: var(--danger);
   font-size: 1rem;
@@ -386,6 +392,17 @@ button#new-game:active {
 
 .cell.flag-sweep {
   animation: flag-sweep-anim 0.35s ease-out backwards;
+}
+
+@keyframes wrong-flag-anim {
+  0% {
+    background: var(--cell-bg);
+    color: var(--cell-flag-color);
+  }
+  100% {
+    background: var(--cell-mine-bg);
+    color: var(--danger);
+  }
 }
 
 @keyframes flag-sweep-anim {
